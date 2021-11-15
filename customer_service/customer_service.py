@@ -25,9 +25,10 @@ class CustomerService(object):
         :return: A dict with the entity properties.
         """
         return {
-            'entity_id': str(uuid.uuid4()),
+            'cus_id': str(uuid.uuid4()),
             'name': _name,
-            'email': _email
+            'uphone': _uphone
+            'created':_create
         }
 
     def start(self):
@@ -45,16 +46,16 @@ class CustomerService(object):
 
         for customer in customers:
             try:
-                new_customer = CustomerService._create_entity(customer['name'], customer['email'])
+                new_customer = CustomerService._create_entity(customer['name'], customer['uphone'])
             except KeyError:
                 return {
-                    "error": "missing mandatory parameter 'name' and/or 'email'"
+                    "error": "missing mandatory parameter 'name' and/or 'uphone'"
                 }
 
             # trigger event
             self.event_store.publish('customer', create_event('entity_created', new_customer))
 
-            customer_ids.append(new_customer['entity_id'])
+            customer_ids.append(new_customer['cus_id'])
 
         return {
             "result": customer_ids
@@ -62,17 +63,17 @@ class CustomerService(object):
 
     def update_customer(self, _req):
         try:
-            customer = CustomerService._create_entity(_req['name'], _req['email'])
+            customer = CustomerService._create_entity(_req['name'], _req['uphone'])
         except KeyError:
             return {
-                "error": "missing mandatory parameter 'name' and/or 'email'"
+                "error": "missing mandatory parameter 'name' and/or 'uphone'"
             }
 
         try:
-            customer['entity_id'] = _req['entity_id']
+            customer['cus_id'] = _req['cus_id']
         except KeyError:
             return {
-                "error": "missing mandatory parameter 'entity_id'"
+                "error": "missing mandatory parameter 'cus_id'"
             }
 
         # trigger event
@@ -84,13 +85,13 @@ class CustomerService(object):
 
     def delete_customer(self, _req):
         try:
-            customer_id = _req['entity_id']
+            customer_id = _req['cus_id']
         except KeyError:
             return {
-                "error": "missing mandatory parameter 'entity_id'"
+                "error": "missing mandatory parameter 'cus_id'"
             }
 
-        rsp = send_message('read-model', 'get_entity', {'name': 'customer', 'id': customer_id})
+        rsp = send_message('read-model', 'get_entity', {'name': 'customer', 'id': cus_id})
         if 'error' in rsp:
             rsp['error'] += ' (from read-model)'
             return rsp
